@@ -1,12 +1,16 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns #-}
+
 module Main where
 
 import Codec.Compression.GZip (decompress)
 import qualified Data.ByteString.Lazy as BS
 import Data.Functor
 import System.Random
-import Numeric.LinearAlgebra (Matrix, Vector)
+import Numeric.LinearAlgebra (Matrix, Vector, randomVector, uniformSample, RandDist(Uniform), (#>))
+import Control.Monad.Random (MonadRandom, getRandom)
 
 img_header_size = 16
 label_header_size = 8
@@ -37,9 +41,12 @@ data Weights = W { wBiases :: !(Vector Double)  -- n
                  }  -- "m to n" layer
 
 -- define a network data type
+-- can build a network like : ih :&~ hh :&~ O ho
 data Network :: * where
     O :: !Weights -> Network
     (:&~) :: !Weights -> !Network -> Network
+
+infixr 5 :&~
 
 {- equivalent to:
 data Network = O Weights
@@ -47,5 +54,33 @@ data Network = O Weights
 -}
 
 randomWeights :: MonadRandom m => Int -> Int -> m Weights
+randomWeights i o = do
+  seed1 :: Int <- getRandom  -- generate random seed
+  seed2 :: Int <- getRandom
+      -- randomVector :: Seed -> RandDist -> Int -> VectorDouble
+      -- obtains a vector of random elements of provided size
+  let wB = randomVector seed1 Uniform o * 2 - 1
+      -- uniformSample :: Seed -> Int -> [(Double, Double)] -> Matrix Double
+      wN = uniformSample seed2 o (replicate i (-1, 1))  -- o x i -sized matrix
+  return $ W wB wN
 
-infixr 5 :&~
+-- build a random network composed of layers
+-- input layer size -> [hidden layer sizes] -> output layer size
+randomNet :: MonadRandom m => Int -> [Int] -> Int -> m Network
+randomNet i [] o = O <$> randomWeights i o  -- final fully-connected layer
+randomNet i (h:hs) o = (:&~) <$> randomWeights i h <*> randomNet h hs o
+
+-- the logistic (sigmoid) function
+logistic :: Floating a => a -> a
+logistic x = 1 / (1 + exp (-x))
+
+-- matrix-vector multiplication
+-- (#>) :: Numeric t => Matrix t -> Vector t -> Vector t
+runLayer :: Weights -> Vector Double -> Vector Double
+runLayer (W wB wN) v = wB + wN #> v
+
+-- feedforward the network with every activaciton function as sigmoid
+runNet :: Network -> Vector Double -> Vector Double
+runNet (O w) !v = logistic (runLayer w v)
+runNet (w :&~ n') !v = let v' = logistic (runLayer w v)
+                       in runNet n' v'
