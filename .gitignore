@@ -1,0 +1,8 @@
+.stack-work/
+mnist-read.cabal
+*~
+*.hi
+*.o
+*.swp
+*.tag
+*.gz
