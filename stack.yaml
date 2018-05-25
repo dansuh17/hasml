@@ -41,6 +41,7 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - singletons-2.2
+- th-desugar-1.6
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

@@ -26,6 +26,7 @@ dependencies:
 - bytestring
 - hmatrix
 - MonadRandom
+- singletons >= 2.2
 
 library:
   source-dirs: src

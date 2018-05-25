@@ -14,6 +14,7 @@ import Control.Monad
 import Control.Monad.Random
 import Data.List
 import Data.Maybe
+import Data.Singletons
 import Numeric.LinearAlgebra.Static (L, R, randomVector, RandDist(Uniform), uniformSample)
 import System.Environment
 import Text.Read
@@ -38,6 +39,7 @@ data Network :: Nat -> [Nat] -> Nat -> * where
 infixr 5 :&~
 
 -- random weight
+-- O <$> randomWeights -- this creates a Network i '[] o
 randomWeights :: (MonadRandom m, KnownNat i, KnownNat o) => m (Weights i o)
 randomWeights = do
   s1 :: Int <- getRandom
@@ -45,3 +47,14 @@ randomWeights = do
   let wB = randomVector s1 Uniform * 2 - 1  -- uses type inference to determine the input / output sizes!
       wN = uniformSample s2 (-1) 1
   return $ W wB wN
+
+-- dependent pattern matching
+randomNet :: forall m i hs o. (MonadRandom m, KnownNat i, SingI hs, KnownNat o) => m (Network i hs o)
+randomNet = go sing
+  where
+    go :: forall h hs'. KnownNat h
+      => Sing hs'
+      -> m (Network h hs' o)
+    go = \case  -- labmda case
+      Snil -> O <$> randomWeights
+      SNat `SCons` ss -> (:&~) <$> randomWeights <*> go ss
