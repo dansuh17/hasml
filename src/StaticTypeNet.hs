@@ -16,37 +16,45 @@ import Data.Maybe
 import Data.Singletons
 import Data.Singletons.Prelude
 import Data.Singletons.TypeLits
-import Numeric.LinearAlgebra.Static
+import Numeric.LinearAlgebra.Static (R, L, (#>), norm_2, tr, RandDist(Uniform), vector, outer, konst, randomVector, uniformSample)
 import System.Environment
 import Text.Read
 
+-- a fully connected layer with bias defined by dimension "o x i"
+-- R = vector, L = matrix
 data Weights i o = W { wBiases :: !(R o)
                      , wNodes  :: !(L o i)
                      } -- an "o x i" layer
 
+-- Nat = kind of type-level natural numbers
 data Network :: Nat -> [Nat] -> Nat -> * where
-    O     :: !(Weights i o)
-          -> Network i '[] o
+    O :: !(Weights i o)
+      -> Network i '[] o
     (:&~) :: KnownNat h
           => !(Weights i h)
           -> !(Network h hs o)
           -> Network i (h ': hs) o
 infixr 5 :&~
 
+-- logistic function
 logistic :: Floating a => a -> a
 logistic x = 1 / (1 + exp (-x))
 
+-- derivative of logistic function
 logistic' :: Floating a => a -> a
 logistic' x = logix * (1 - logix)
   where
     logix = logistic x
 
+-- runs a fully connected layer
+-- KnownNat == dataclass that gives the integer associated with a type-level natural (Nat)
 runLayer :: (KnownNat i, KnownNat o)
-         => Weights i o
-         -> R i
-         -> R o
+         => Weights i o  -- given the "o x i" layer,
+         -> R i  -- multiply this "i" dimensional vector
+         -> R o  -- and outputs an "o" dimensional vector
 runLayer (W wB wN) v = wB + wN #> v  -- vector multiplication and addition
 
+-- runs a network
 runNet :: (KnownNat i, KnownNat o)
        => Network i hs o
        -> R i
