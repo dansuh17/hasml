@@ -159,6 +159,7 @@ netTest rate n = do
     inCircle :: KnownNat n => R n -> (R n, Double) -> Bool
     v `inCircle` (o, r) = norm_2 (v - o) <= r
 
+{-
 main :: IO ()
 main = do
     args <- getArgs
@@ -168,6 +169,7 @@ main = do
     putStrLn =<< evalRandIO (netTest (fromMaybe 0.25   rate)
                                      (fromMaybe 500000 n   )
                             )
+-}
 
 (!!?) :: [a] -> Int -> Maybe a
 xs !!? i = listToMaybe (drop i xs)
