@@ -5,7 +5,8 @@
 
 module Main where
 
-import UntypedNet
+import StaticTypeNet
+-- import UntypedNet
 import Mnist (readMnistAndShow)
 import Data.Maybe
 import System.Environment (getArgs)
