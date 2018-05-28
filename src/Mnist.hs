@@ -5,10 +5,11 @@ import Codec.Compression.GZip (decompress)
 import qualified Data.ByteString.Lazy as BS
 import Numeric.LinearAlgebra (vector, Vector, R, Z, reshape, Matrix, toList, toRows, fromRows)
 
+-- | typeclass that represents a dataset
 class DataSet a where
   groupByLabel :: a -> [Matrix R]
-  oneHotLabel :: a -> Matrix Z
   distinctLabels :: a -> [R]
+  -- oneHotLabel :: a -> Matrix Z
 
 img_header_size = 16
 label_header_size = 8
@@ -16,8 +17,8 @@ img_size = 784
 
 -- labeled data consists of data and their label
 data LabeledData = LabeledData
-    { dat :: Matrix R  -- this has num_data >< data_dimension
-    , label :: Vector R
+    { dat :: !(Matrix R)  -- this has num_data >< data_dimension
+    , label :: !(Vector R)
     }
 
 -- define LabeledData as instance of DataSet typeclass
