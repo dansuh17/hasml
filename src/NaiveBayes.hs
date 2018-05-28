@@ -3,13 +3,18 @@
 module NaiveBayes where
 
 import Mnist (LabeledData, groupByLabel, dat)
+import Data.Function (on)
 import Numeric.LinearAlgebra (Vector, Matrix, R, size, fromList, toColumns, sumElements, fromRows)
+
+-- divide two integers to make a fraction
+fractionDiv :: Fractional b => Int -> Int -> b
+fractionDiv = (/) `on` fromIntegral
 
 -- calculates the prior probability of a dataset
 -- the data are organized as rows having same label
 -- P(y)
 prior :: LabeledData -> Vector R
-prior ld = fromList $ map ((/ fromIntegral totalNum) . fromIntegral) numElemsPerLabel
+prior ld = fromList $ map (fractionDiv totalNum) numElemsPerLabel
   where
     grouped :: [Matrix R] = groupByLabel ld
     numElemsPerLabel :: [Int] = map (fst . size) grouped

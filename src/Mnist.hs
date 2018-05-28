@@ -61,6 +61,12 @@ makeLabelData = byteStringToVector . BS.drop 8  -- 8-byte header
 makeImgData :: BS.ByteString -> Matrix R
 makeImgData = reshape img_size . byteStringToVector . BS.drop 16  -- 16-byte header
 
+readTrainData :: IO LabeledData
+readTrainData = do
+  imgData <- makeImgData <$> decompress <$> BS.readFile "train-images-idx3-ubyte.gz"
+  labelData <- makeLabelData <$> decompress <$> BS.readFile "train-labels-idx1-ubyte.gz"
+  return $ LabeledData imgData labelData
+
 -- ByteString is an optimized representation of Word8.
 -- BS.readFile :: FilePath -> IO ByteString
 -- decompress :: ByteString -> ByteString

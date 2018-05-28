@@ -5,9 +5,10 @@
 
 module Main where
 
+import NaiveBayes as NB
 import StaticTypeNet
 -- import UntypedNet
-import Mnist (readMnistAndShow)
+import Mnist (readMnistAndShow, readTrainData)
 import Data.Maybe
 import System.Environment (getArgs)
 import Control.Monad.Random (evalRandIO)
@@ -15,7 +16,12 @@ import Text.Read (readMaybe)
 
 main :: IO ()
 main = do
-  readMnistAndShow
+  -- readMnistAndShow
+  -- now read MNIST and print out the prior distribution
+  trainLabeledData <- readTrainData
+  putStrLn $ show $ NB.prior trainLabeledData
+  putStrLn $ show $ NB.likelihood trainLabeledData
+
   args <- getArgs
   let n = readMaybe =<< (args !!? 0)
       rate = readMaybe =<< (args !!? 1)
