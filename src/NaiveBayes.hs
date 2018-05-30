@@ -16,12 +16,13 @@ fractionDiv = (/) `on` fromIntegral
 -- the data are organized as rows having same label
 -- P(y)
 prior :: LabeledData -> Vector R
-prior ld = fromList $ map (fractionDiv totalNum) numElemsPerLabel
+prior ld = fromList $ map (flip fractionDiv totalNum) numElemsPerLabel
   where
     grouped :: [Matrix R] = groupByLabel ld
     numElemsPerLabel :: [Int] = map (fst . size) grouped
     totalNum = sum numElemsPerLabel
 
+-- used as prior distribution of likelihood
 epsilon :: R = 0.001
 
 -- conditional likelihood of each data attributes given the class

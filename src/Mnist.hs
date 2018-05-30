@@ -1,6 +1,6 @@
 module Mnist where
 
-import Data.List (nub)
+import Data.List (nub, sort)
 import Codec.Compression.GZip (decompress)
 import qualified Data.ByteString.Lazy as BS
 import Numeric.LinearAlgebra (vector, Vector, R, Z, reshape, Matrix, toList, toRows, fromRows)
@@ -23,7 +23,7 @@ data LabeledData = LabeledData
 
 -- define LabeledData as instance of DataSet typeclass
 instance DataSet LabeledData where
-    distinctLabels = nub . toList . label
+    distinctLabels = sort . nub . toList . label
     groupByLabel ld = [
         -- extract index that matches the label, and cherrypicks them from data rows
         fromRows [dataRows !! idx | idx <- extractIdx lab]
@@ -33,8 +33,6 @@ instance DataSet LabeledData where
         labels = toList $ label ld  -- represent vector to list of values
         labelIdx = zip labels [0..]  -- zip it with index
         extractIdx targetLabel = map snd $ filter ((== targetLabel) . fst) labelIdx
-
-    -- groupByLabel ld = [ | lab <- ]
 
 -- mnist dataset consists of train set and a test set
 data Mnist = Mnist
@@ -61,11 +59,17 @@ makeLabelData = byteStringToVector . BS.drop 8  -- 8-byte header
 makeImgData :: BS.ByteString -> Matrix R
 makeImgData = reshape img_size . byteStringToVector . BS.drop 16  -- 16-byte header
 
-readTrainData :: IO LabeledData
-readTrainData = do
-  imgData <- makeImgData <$> decompress <$> BS.readFile "train-images-idx3-ubyte.gz"
-  labelData <- makeLabelData <$> decompress <$> BS.readFile "train-labels-idx1-ubyte.gz"
-  return $ LabeledData imgData labelData
+readData :: String -> String -> IO LabeledData
+readData imgfile labelfile = do
+    imgData <- makeImgData <$> decompress <$> BS.readFile imgfile
+    labelData <- makeLabelData <$> decompress <$> BS.readFile labelfile
+    return $ LabeledData imgData labelData
+
+readMnist :: IO Mnist
+readMnist = do
+    trainDataset <- readData "train-images-idx3-ubyte.gz" "train-labels-idx1-ubyte.gz"
+    testDataset <- readData "t10k-images-idx3-ubyte.gz" "t10k-labels-idx1-ubyte.gz"
+    return $ Mnist trainDataset testDataset
 
 -- ByteString is an optimized representation of Word8.
 -- BS.readFile :: FilePath -> IO ByteString
