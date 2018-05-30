@@ -9,6 +9,7 @@ import Numeric.LinearAlgebra (vector, Vector, R, Z, reshape, Matrix, toList, toR
 class DataSet a where
   groupByLabel :: a -> [Matrix R]
   distinctLabels :: a -> [R]
+  dataLabel :: a -> [(Vector R, R)]  -- pair the data and label for each sample
   -- oneHotLabel :: a -> Matrix Z
 
 img_header_size = 16
@@ -33,6 +34,7 @@ instance DataSet LabeledData where
         labels = toList $ label ld  -- represent vector to list of values
         labelIdx = zip labels [0..]  -- zip it with index
         extractIdx targetLabel = map snd $ filter ((== targetLabel) . fst) labelIdx
+    dataLabel ld = zip (toRows $ dat ld) (toList $ label ld)
 
 -- mnist dataset consists of train set and a test set
 data Mnist = Mnist

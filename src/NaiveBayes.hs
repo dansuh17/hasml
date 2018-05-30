@@ -8,6 +8,20 @@ import Mnist (LabeledData, groupByLabel, dat)
 import Data.Function (on)
 import Numeric.LinearAlgebra (Vector, Matrix, R, size, fromList, toColumns, sumElements, fromRows, (#>), toList)
 
+-- TODO: later expand this by receiving label type and data type
+data NaiveBayesClassifier = NBC
+    { p :: !(Vector R)
+    , l :: !(Matrix R)
+    }
+
+-- represents a classifier that predicts the class from input sample
+class Classifier a where
+    -- given the prior and likelihood, with a sample data, predict the class
+    predict :: a -> Vector R -> Int  -- TODO: parameterize label type
+
+instance Classifier NaiveBayesClassifier where
+    predict nbc sample = argmax $ (p nbc) * (l nbc #> sample)
+
 -- divide two integers to make a fraction
 fractionDiv :: Fractional b => Int -> Int -> b
 fractionDiv = (/) `on` fromIntegral
@@ -40,7 +54,3 @@ likelihood ld = fromRows $ map attrProb colSumByLabel
 -- find maximum index in the vector
 argmax :: Vector R -> Int
 argmax = fst . maximumBy (comparing snd) . zip [0..] . toList
-
--- given the prior and likelihood, with a sample data, predict the class
-predict :: Vector R -> Matrix R -> Vector R -> Int
-predict pri likeli sample = argmax $ pri * (likeli #> sample)

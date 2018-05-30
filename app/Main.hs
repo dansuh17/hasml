@@ -8,38 +8,46 @@ module Main where
 import NaiveBayes as NB
 import StaticTypeNet
 -- import UntypedNet
-import Mnist (readMnistAndShow, readData, dat, label, readMnist, trainData, testData)
+import Mnist (readMnistAndShow, readData, dat, label, readMnist, trainData, testData, LabeledData, dataLabel)
 import Data.Maybe
 import System.Environment (getArgs)
 import Control.Monad.Random (evalRandIO)
 import Text.Read (readMaybe)
-import Numeric.LinearAlgebra (toRows, fromList, toList)
+import Numeric.LinearAlgebra (Vector, R, toRows, fromList, toList)
 
 main :: IO ()
 main = do
   -- readMnistAndShow
   -- now read MNIST and print out the prior distribution
   mnist <- readMnist
-  let trainLabeledData = trainData mnist
-      testLabeledData = testData mnist
+  let trainLabeledData :: LabeledData = trainData mnist  -- train set
+      testLabeledData :: LabeledData = testData mnist  -- test set
       pri = NB.prior trainLabeledData
       lk = NB.likelihood trainLabeledData
-      predictor = predict pri lk
+      naiveBayesClassifier :: NB.NaiveBayesClassifier = NB.NBC pri lk  -- create a classifier
+      predictor = predict naiveBayesClassifier
 
   -- show the prior
   putStrLn $ "Below is the prior distribution"
   putStrLn $ show pri  -- show prior values
 
-  let testData = toRows $ dat testLabeledData
-      testLabel = toList $ label testLabeledData
-      dataLabel = zip testData testLabel
+  let datlab :: [(Vector R, R)] = dataLabel testLabeledData  -- data-label pairs
       predictedAndTruth ld = (predictor (fst ld), floor $ snd ld)
-      predictedResult :: [(Int, Int)] = map predictedAndTruth dataLabel
+      -- the result of prediction
+      predictedResult :: [(Int, Int)] = map predictedAndTruth datlab
+      -- calculate the accuracy
       accuracy :: [(Int, Int)] -> Double
-      accuracy res = NB.fractionDiv (foldl (\acc elem -> if fst elem == snd elem then acc + 1 else acc) 0 res) (length res)
+      accuracy res = NB.fractionDiv
+          (foldl
+              (\acc elem -> if fst elem == snd elem
+                            then acc + 1
+                            else acc)
+              0 res)  -- accumulate correct predictions
+          (length res)  -- ...divided by total size
 
   -- show predicted value and truth label
-  mapM_ (putStrLn . show . predictedAndTruth) dataLabel
+  mapM_ (putStrLn . show . predictedAndTruth) datlab
+
   putStrLn $ "The accuracy is: "
   putStrLn $ show $ accuracy predictedResult
 
