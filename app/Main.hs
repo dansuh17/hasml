@@ -7,8 +7,7 @@ module Main where
 
 import NaiveBayes as NB
 import StaticTypeNet
--- import UntypedNet
-import Mnist (readMnistAndShow, readData, dat, label, readMnist, trainData, testData, LabeledData, dataLabel)
+import Mnist (readMnistAndShow, readData, dat, label, readMnist, trainData, testData, LabeledData, dataLabel, render)
 import Data.Maybe
 import System.Environment (getArgs)
 import Control.Monad.Random (evalRandIO)
@@ -50,6 +49,10 @@ main = do
 
   putStrLn $ "The accuracy is: "
   putStrLn $ show $ accuracy predictedResult
+
+  -- show the 100th sample
+  putStrLn $ render $ fst $ datlab !! 100
+  putStrLn $ show $ predictedResult !! 100
 
   args <- getArgs
   let n = readMaybe =<< (args !!? 0)

@@ -1,6 +1,6 @@
 module Mnist where
 
-import Data.List (nub, sort)
+import Data.List (nub, sort, intercalate)
 import Codec.Compression.GZip (decompress)
 import qualified Data.ByteString.Lazy as BS
 import Numeric.LinearAlgebra (vector, Vector, R, Z, reshape, Matrix, toList, toRows, fromRows)
@@ -14,6 +14,7 @@ class DataSet a where
 
 img_header_size = 16
 label_header_size = 8
+width = 28
 img_size = 784
 
 -- labeled data consists of data and their label
@@ -42,9 +43,15 @@ data Mnist = Mnist
     , testData :: LabeledData
     }
 
--- coerce n - Integral type
-render :: Integral a => a -> Char
-render n = let s = " .:oO@" in s !! (fromIntegral n * length s `div` 256)
+-- render a single number
+render :: Vector R -> String
+render s = intercalate "\n" $ splitted $ map (intensity . floor) (toList s)  -- insert \n every 28 chars
+  where
+    chars = " ..:oO0@"
+    intensity n = chars !! (n * length chars `div` 256)
+    splitted :: [a] -> [[a]]
+    splitted [] = []
+    splitted v = (take width v) : (splitted $ drop width v)  -- split by 28
 
 -- convert byteString to vector -- in this case, bytestring is read as numbers byte by byte
 byteStringToVector :: BS.ByteString -> Vector R
@@ -61,6 +68,7 @@ makeLabelData = byteStringToVector . BS.drop 8  -- 8-byte header
 makeImgData :: BS.ByteString -> Matrix R
 makeImgData = reshape img_size . byteStringToVector . BS.drop 16  -- 16-byte header
 
+-- reads the file and creates a labeled data
 readData :: String -> String -> IO LabeledData
 readData imgfile labelfile = do
     imgData <- makeImgData <$> decompress <$> BS.readFile imgfile
@@ -81,14 +89,3 @@ readMnistAndShow = do
   imgData <- makeImgData <$> decompress <$> BS.readFile "train-images-idx3-ubyte.gz"
   labelData <- makeLabelData <$> decompress <$> BS.readFile "train-labels-idx1-ubyte.gz"
   putStrLn $ show $ labelData
-  -- putStr $ show $ makeImgData imgBytes
-{-
-  n <- (`mod` 60000) <$> randomIO
-  putStr . unlines $
-    [(render . BS.index imgBytes . byte_pos n r) <$> [0..27] | r <- [0..27]]
-  print $ BS.index labelBytes (n + label_header_size)
-    where
-      -- find the position of the byte located in (row, col) in the n_th sample
-      byte_pos n row col = img_header_size + (n * img_size + row * 28 + col)
-      -}
-

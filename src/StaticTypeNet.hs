@@ -159,18 +159,6 @@ netTest rate n = do
     inCircle :: KnownNat n => R n -> (R n, Double) -> Bool
     v `inCircle` (o, r) = norm_2 (v - o) <= r
 
-{-
-main :: IO ()
-main = do
-    args <- getArgs
-    let n = readMaybe =<< (args !!? 0)
-        rate = readMaybe =<< (args !!? 1)
-    putStrLn "Training network..."
-    putStrLn =<< evalRandIO (netTest (fromMaybe 0.25   rate)
-                                     (fromMaybe 500000 n   )
-                            )
--}
-
 (!!?) :: [a] -> Int -> Maybe a
 xs !!? i = listToMaybe (drop i xs)
 
