@@ -1,1 +1,1 @@
-# mnist-read
+# Naive Bayes to classify MNIST with Haskell
