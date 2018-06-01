@@ -1,5 +1,6 @@
 .stack-work/
 mnist-read.cabal
+naive-bayes-mnist.cabal
 *~
 *.hi
 *.o
